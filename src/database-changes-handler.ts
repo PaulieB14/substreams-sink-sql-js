@@ -111,13 +111,17 @@ export class DatabaseChangesHandler {
   }
 
   private handleUpdate(change: TableChange, pk: PrimaryKeyInfo): void {
-    const setClauses = change.fields.map((f) => `"${f.name}" = ?`).join(", ");
-    const setValues = change.fields.map((f) => f.newValue);
-    const whereClause = pk.columns.map((c) => `"${c}" = ?`).join(" AND ");
+    // Use INSERT OR REPLACE (upsert) because UPDATE operations may arrive
+    // before a CREATE for the same PK (e.g., eth-block-meta uses UPDATE for
+    // "day:last:*" keys that may not have been inserted yet in this session)
+    const allColumns = [...pk.columns, ...change.fields.map((f) => f.name)];
+    const allValues = [...pk.values, ...change.fields.map((f) => f.newValue)];
+    const placeholders = allColumns.map(() => "?").join(", ");
+    const columns = allColumns.map((c) => `"${c}"`).join(", ");
 
     this.sqlEngine.run(
-      `UPDATE "${change.table}" SET ${setClauses} WHERE ${whereClause}`,
-      [...setValues, ...pk.values]
+      `INSERT OR REPLACE INTO "${change.table}" (${columns}) VALUES (${placeholders})`,
+      allValues
     );
   }
 
