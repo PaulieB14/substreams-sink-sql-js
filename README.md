@@ -1,129 +1,174 @@
-# substreams-sink-sql-js
+# Substreams SQL Sink (PostgreSQL)
 
-Universal client-side Substreams sink. Materialize any Substreams `DatabaseChanges` output into a local SQLite database. Zero infrastructure needed.
+Sink any Substreams `db_out` module into PostgreSQL using [StreamingFast's `substreams-sink-sql`](https://github.com/streamingfast/substreams-sink-sql).
 
-```
-npm install substreams-sink-sql-js
-```
-
-## Why?
-
-Substreams is powerful but getting data out requires setting up PostgreSQL, ClickHouse, or other infrastructure. This library skips all of that — connect to any Substreams package and query the data locally with SQL.
-
-## Quick Start
-
-```ts
-import { SubstreamsSql } from "substreams-sink-sql-js";
-
-const sink = new SubstreamsSql({
-  endpoint: "https://mainnet.eth.streamingfast.io:443",
-  token: process.env.SUBSTREAMS_API_TOKEN,
-  manifest: "https://spkg.io/streamingfast/substreams-eth-block-meta-v0.4.3.spkg",
-  outputModule: "db_out",
-  startBlock: 1000000,
-  onBlock(info) {
-    console.log(`Block ${info.number}`);
-  },
-});
-
-await sink.start();
-
-// Query anytime — it's just SQL
-const results = sink.query("SELECT * FROM block_meta ORDER BY id DESC LIMIT 10");
-console.log(results);
-```
-
-## Features
-
-- **Auto-table creation** — tables are created automatically from the first `DatabaseChanges` output. No schema definition needed.
-- **Cursor-based resumption** — stop and restart without losing progress. The cursor is stored in the SQLite database.
-- **Snapshot export/import** — export the entire database as a file, share it, import it to skip initial sync.
-- **Reorg handling** — `BlockUndoSignal` triggers automatic rollback of affected rows via a history table.
-- **Auto-reconnect** — exponential backoff on stream disconnects.
-- **Per-block transactions** — atomic processing. Failed block = full rollback, cursor not advanced.
-
-## API
-
-### `new SubstreamsSql(options)`
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `endpoint` | `string` | Yes | Substreams gRPC endpoint URL |
-| `token` | `string` | Yes | Substreams API JWT token |
-| `manifest` | `string` | Yes | URL to `.spkg` package file |
-| `outputModule` | `string` | Yes | Module name (e.g., `db_out`) |
-| `startBlock` | `number` | No | Block to start from |
-| `stopBlock` | `number` | No | Block to stop at |
-| `onBlock` | `function` | No | Called after each block is processed |
-| `onProgress` | `function` | No | Called with sync progress updates |
-| `onError` | `function` | No | Called on stream errors |
-
-### Methods
-
-```ts
-await sink.start();                    // Start streaming (non-blocking)
-sink.stop();                           // Stop streaming
-sink.query("SELECT ...");              // Query the local database
-sink.getStatus();                      // Get current block number
-const snapshot = sink.exportSnapshot(); // Export as Uint8Array
-```
-
-### Resume from snapshot
-
-```ts
-import { readFileSync } from "fs";
-
-const snapshot = readFileSync("my-snapshot.sqlite");
-const sink = await SubstreamsSql.fromSnapshot(snapshot, options);
-await sink.start(); // Resumes from where the snapshot left off
-```
-
-## Supported Output Types
-
-- **DatabaseChanges** (`db_out`) — fully supported
-- **EntityChanges** (`graph_out`) — coming soon
+This repo is a ready-to-use template. Swap in your own `.spkg` and `schema.sql` to get started.
 
 ## How It Works
 
 ```
-Substreams gRPC stream
-  → Decode DatabaseChanges protobuf
-  → Auto-create SQLite tables from field names
-  → INSERT/UPDATE/DELETE rows per operation
-  → Save cursor for resumption
-  → Track history for reorg rollback
-  → Query with standard SQL anytime
+Substreams .spkg (db_out module)
+  → substreams-sink-sql (StreamingFast CLI tool)
+  → PostgreSQL
+  → Query with any SQL client / pgweb UI
 ```
 
-The SQLite engine runs in-process via [sql.js](https://github.com/sql-js/sql.js/) (SQLite compiled to WASM). No external database needed.
+No custom sink code needed — `substreams-sink-sql` handles streaming, cursor management, reorg handling, and database writes.
 
-## Endpoints
+## Prerequisites
 
-Find Substreams endpoints at [docs.substreams.dev](https://docs.substreams.dev/reference-and-specs/chains-and-endpoints). Common ones:
+1. **substreams CLI** — [Install guide](https://substreams.streamingfast.io/getting-started/installing-the-cli)
+2. **substreams-sink-sql** — `brew install streamingfast/tap/substreams-sink-sql`
+3. **Docker** — For running Postgres locally
+4. **Substreams API token** — Get one at [app.pinax.network](https://app.pinax.network) or [app.streamingfast.io](https://app.streamingfast.io)
+
+## Quick Start
+
+```bash
+# 1. Clone this repo
+git clone https://github.com/PaulieB14/substreams-sink-sql-js.git
+cd substreams-sink-sql-js
+
+# 2. Copy and configure environment
+cp .env.example .env
+# Edit .env with your SUBSTREAMS_API_TOKEN
+
+# 3. Start Postgres + pgweb
+make up
+
+# 4. Create tables
+make setup
+
+# 5. Stream data into Postgres
+make dev
+
+# 6. Browse data at http://localhost:8081
+```
+
+## Project Structure
+
+```
+.
+├── substreams.yaml      # Sink config — imports .spkg, defines sink type
+├── schema.sql           # PostgreSQL DDL — tables, indexes, types
+├── docker-compose.yml   # Postgres 16 + pgweb for local dev
+├── Makefile             # Automation: pack, setup, dev, run, reset
+├── .env.example         # Configuration template
+└── README.md
+```
+
+## Using Your Own Substreams
+
+This template ships with `substreams-eth-block-meta` as an example. To use your own:
+
+### 1. Update `substreams.yaml`
+
+Change the `imports` section to point to your `.spkg`:
+
+```yaml
+imports:
+  spkg: https://spkg.io/your-org/your-substreams-v1.0.0.spkg
+  # Or a local file:
+  # spkg: ./your-substreams-v1.0.0.spkg
+```
+
+### 2. Write `schema.sql`
+
+Create tables matching your Substreams `db_out` output. Use proper PostgreSQL types:
+
+```sql
+CREATE TABLE IF NOT EXISTS erc20_transfers (
+    block_num       INTEGER NOT NULL,
+    tx_hash         TEXT NOT NULL,
+    log_index       INTEGER NOT NULL,
+    contract        TEXT NOT NULL,
+    "from"          TEXT NOT NULL,
+    "to"            TEXT NOT NULL,
+    amount          NUMERIC NOT NULL,
+    timestamp       TIMESTAMP NOT NULL,
+    PRIMARY KEY (block_num, tx_hash, log_index)
+);
+
+CREATE INDEX IF NOT EXISTS idx_erc20_transfers_contract ON erc20_transfers (contract);
+CREATE INDEX IF NOT EXISTS idx_erc20_transfers_from ON erc20_transfers ("from");
+CREATE INDEX IF NOT EXISTS idx_erc20_transfers_to ON erc20_transfers ("to");
+CREATE INDEX IF NOT EXISTS idx_erc20_transfers_timestamp ON erc20_transfers (timestamp);
+```
+
+### 3. Run it
+
+```bash
+make setup   # Apply new schema
+make dev     # Stream data
+```
+
+## Makefile Commands
+
+| Command | Description |
+|---------|-------------|
+| `make help` | Show all available commands |
+| `make up` | Start Postgres + pgweb |
+| `make down` | Stop Docker services |
+| `make pack` | Pack manifest into `.spkg` |
+| `make setup` | Create system tables + apply `schema.sql` |
+| `make dev` | Run sink in dev mode (short block range) |
+| `make run` | Run sink in production mode (live streaming) |
+| `make reset` | Drop and recreate all tables |
+| `make clean` | Remove `.spkg` files |
+
+## Configuration
+
+Override defaults via environment variables or `.env`:
+
+```bash
+# Custom endpoint and block range
+make dev ENDPOINT=polygon.substreams.pinax.network:443 START_BLOCK=50000000 STOP_BLOCK=+500
+
+# Custom Postgres DSN
+make dev PG_DSN=psql://user:pass@myhost:5432/mydb?sslmode=disable
+```
+
+## Common Endpoints
 
 | Chain | Endpoint |
 |-------|----------|
-| Ethereum | `https://mainnet.eth.streamingfast.io:443` |
-| Polygon | `https://polygon.substreams.pinax.network:443` |
-| Arbitrum | `https://arb-one.substreams.pinax.network:443` |
-| Base | `https://base-mainnet.substreams.pinax.network:443` |
+| Ethereum | `eth.substreams.pinax.network:443` |
+| Polygon | `polygon.substreams.pinax.network:443` |
+| Arbitrum | `arb-one.substreams.pinax.network:443` |
+| Base | `base-mainnet.substreams.pinax.network:443` |
+| BSC | `bsc.substreams.pinax.network:443` |
 
-## Find Packages
+Full list: [Chains & Endpoints](https://substreams.streamingfast.io/reference-and-specs/chains-and-endpoints)
 
-Browse available Substreams packages at [substreams.dev](https://substreams.dev). Look for packages with a `db_out` module.
+## Find Substreams Packages
 
-## Development
+Browse available `.spkg` files at [substreams.dev](https://substreams.dev). Look for packages with a `db_out` module.
 
-```bash
-git clone https://github.com/PaulieB14/substreams-sink-sql-js.git
-cd substreams-sink-sql-js
-npm install
-npm run build
+## Writing Your Own Substreams
 
-# Run example
-export SUBSTREAMS_API_TOKEN=your_token
-npx tsx examples/basic-usage.ts <manifest-url> [output-module] [start-block]
+If you need a custom `db_out` module, create a Rust Substreams project:
+
+```rust
+use substreams_database_change::pb::sf::substreams::sink::database::v1::DatabaseChanges;
+use substreams_database_change::tables::Tables;
+
+#[substreams::handlers::map]
+pub fn db_out(events: MyEvents) -> Result<DatabaseChanges, substreams::errors::Error> {
+    let mut tables = Tables::new();
+
+    for event in events.items {
+        tables
+            .create_row("my_table", format!("{}-{}", event.tx_hash, event.log_index))
+            .set("tx_hash", &event.tx_hash)
+            .set("amount", &event.amount)
+            .set("timestamp", &event.timestamp);
+    }
+
+    Ok(tables.to_database_changes())
+}
 ```
+
+See the [Substreams SQL docs](https://substreams.streamingfast.io/documentation/consume/sql) for the full guide.
 
 ## License
 
