@@ -4,6 +4,8 @@ Sink any Substreams `db_out` module into PostgreSQL using [StreamingFast's `subs
 
 This repo is a ready-to-use template. Swap in your own `.spkg` and `schema.sql` to get started.
 
+> 📖 **New to Substreams?** Read the **[Complete Beginner's Tutorial →](./TUTORIAL.md)** — covers concepts, setup, finding packages with [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp), multi-chain usage, and troubleshooting.
+
 ## How It Works
 
 ```
@@ -54,6 +56,7 @@ make dev
 ├── docker-compose.yml   # Postgres 16 + pgweb for local dev
 ├── Makefile             # Automation: pack, setup, dev, run, reset
 ├── .env.example         # Configuration template
+├── TUTORIAL.md          # Complete beginner's tutorial
 └── README.md
 ```
 
@@ -143,6 +146,8 @@ Full list: [Chains & Endpoints](https://substreams.streamingfast.io/reference-an
 ## Find Substreams Packages
 
 Browse available `.spkg` files at [substreams.dev](https://substreams.dev). Look for packages with a `db_out` module.
+
+For AI-assisted discovery, install [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp) — it lets tools like Claude search the registry directly. See the [tutorial](./TUTORIAL.md#-finding-packages-with-substreams-search-mcp) for setup instructions.
 
 ## Writing Your Own Substreams
 
