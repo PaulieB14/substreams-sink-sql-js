@@ -2,6 +2,8 @@
 
 Scaffold a Substreams SQL sink for PostgreSQL in one command.
 
+> **New to Substreams?** Each scaffolded project includes a **TUTORIAL.md** covering concepts, setup, finding packages with [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp), multi-chain usage, and troubleshooting.
+
 ## Usage
 
 ```bash
@@ -126,7 +128,7 @@ Full list: [Chains & Endpoints](https://substreams.streamingfast.io/reference-an
 
 Browse available `.spkg` files at [substreams.dev](https://substreams.dev). Look for packages with a `db_out` module.
 
-For AI-assisted discovery, install [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp).
+For AI-assisted discovery, install [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp) — it lets tools like Claude search the Substreams registry directly. See the scaffolded `TUTORIAL.md` for setup instructions.
 
 ## License
 
