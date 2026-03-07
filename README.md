@@ -1,10 +1,44 @@
-# Substreams SQL Sink (PostgreSQL)
+# create-substreams-sink-sql
 
-Sink any Substreams `db_out` module into PostgreSQL using [StreamingFast's `substreams-sink-sql`](https://github.com/streamingfast/substreams-sink-sql).
+Scaffold a Substreams SQL sink for PostgreSQL in one command.
 
-This repo is a ready-to-use template. Swap in your own `.spkg` and `schema.sql` to get started.
+## Usage
 
-> 📖 **New to Substreams?** Read the **[Complete Beginner's Tutorial →](./TUTORIAL.md)** — covers concepts, setup, finding packages with [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp), multi-chain usage, and troubleshooting.
+```bash
+# Create a new project
+npm init substreams-sink-sql my-sink
+
+# Or use npx
+npx create-substreams-sink-sql my-sink
+
+# Or scaffold in current directory
+npx create-substreams-sink-sql .
+```
+
+## What You Get
+
+```
+my-sink/
+├── substreams.yaml      # Sink config — imports .spkg, defines sink type
+├── schema.sql           # PostgreSQL DDL — tables, indexes, types
+├── docker-compose.yml   # Postgres 16 + pgweb for local dev
+├── Makefile             # Automation: pack, setup, dev, run, reset
+├── .env.example         # Configuration template
+├── .gitignore
+└── TUTORIAL.md          # Complete beginner's tutorial
+```
+
+## Quick Start
+
+```bash
+npm init substreams-sink-sql my-sink
+cd my-sink
+cp .env.example .env     # Add your SUBSTREAMS_API_TOKEN
+make up                  # Start Postgres + pgweb
+make setup               # Create tables
+make dev                 # Stream data
+# Browse data at http://localhost:8081
+```
 
 ## How It Works
 
@@ -24,45 +58,9 @@ No custom sink code needed — `substreams-sink-sql` handles streaming, cursor m
 3. **Docker** — For running Postgres locally
 4. **Substreams API token** — Get one at [app.pinax.network](https://app.pinax.network) or [app.streamingfast.io](https://app.streamingfast.io)
 
-## Quick Start
-
-```bash
-# 1. Clone this repo
-git clone https://github.com/PaulieB14/substreams-sink-sql-js.git
-cd substreams-sink-sql-js
-
-# 2. Copy and configure environment
-cp .env.example .env
-# Edit .env with your SUBSTREAMS_API_TOKEN
-
-# 3. Start Postgres + pgweb
-make up
-
-# 4. Create tables
-make setup
-
-# 5. Stream data into Postgres
-make dev
-
-# 6. Browse data at http://localhost:8081
-```
-
-## Project Structure
-
-```
-.
-├── substreams.yaml      # Sink config — imports .spkg, defines sink type
-├── schema.sql           # PostgreSQL DDL — tables, indexes, types
-├── docker-compose.yml   # Postgres 16 + pgweb for local dev
-├── Makefile             # Automation: pack, setup, dev, run, reset
-├── .env.example         # Configuration template
-├── TUTORIAL.md          # Complete beginner's tutorial
-└── README.md
-```
-
 ## Using Your Own Substreams
 
-This template ships with `substreams-eth-block-meta` as an example. To use your own:
+The template ships with `substreams-eth-block-meta` as an example. To use your own:
 
 ### 1. Update `substreams.yaml`
 
@@ -71,13 +69,11 @@ Change the `imports` section to point to your `.spkg`:
 ```yaml
 imports:
   spkg: https://spkg.io/your-org/your-substreams-v1.0.0.spkg
-  # Or a local file:
-  # spkg: ./your-substreams-v1.0.0.spkg
 ```
 
 ### 2. Write `schema.sql`
 
-Create tables matching your Substreams `db_out` output. Use proper PostgreSQL types:
+Create tables matching your Substreams `db_out` output:
 
 ```sql
 CREATE TABLE IF NOT EXISTS erc20_transfers (
@@ -91,11 +87,6 @@ CREATE TABLE IF NOT EXISTS erc20_transfers (
     timestamp       TIMESTAMP NOT NULL,
     PRIMARY KEY (block_num, tx_hash, log_index)
 );
-
-CREATE INDEX IF NOT EXISTS idx_erc20_transfers_contract ON erc20_transfers (contract);
-CREATE INDEX IF NOT EXISTS idx_erc20_transfers_from ON erc20_transfers ("from");
-CREATE INDEX IF NOT EXISTS idx_erc20_transfers_to ON erc20_transfers ("to");
-CREATE INDEX IF NOT EXISTS idx_erc20_transfers_timestamp ON erc20_transfers (timestamp);
 ```
 
 ### 3. Run it
@@ -119,18 +110,6 @@ make dev     # Stream data
 | `make reset` | Drop and recreate all tables |
 | `make clean` | Remove `.spkg` files |
 
-## Configuration
-
-Override defaults via environment variables or `.env`:
-
-```bash
-# Custom endpoint and block range
-make dev ENDPOINT=polygon.substreams.pinax.network:443 START_BLOCK=50000000 STOP_BLOCK=+500
-
-# Custom Postgres DSN
-make dev PG_DSN=psql://user:pass@myhost:5432/mydb?sslmode=disable
-```
-
 ## Common Endpoints
 
 | Chain | Endpoint |
@@ -147,33 +126,7 @@ Full list: [Chains & Endpoints](https://substreams.streamingfast.io/reference-an
 
 Browse available `.spkg` files at [substreams.dev](https://substreams.dev). Look for packages with a `db_out` module.
 
-For AI-assisted discovery, install [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp) — it lets tools like Claude search the registry directly. See the [tutorial](./TUTORIAL.md#-finding-packages-with-substreams-search-mcp) for setup instructions.
-
-## Writing Your Own Substreams
-
-If you need a custom `db_out` module, create a Rust Substreams project:
-
-```rust
-use substreams_database_change::pb::sf::substreams::sink::database::v1::DatabaseChanges;
-use substreams_database_change::tables::Tables;
-
-#[substreams::handlers::map]
-pub fn db_out(events: MyEvents) -> Result<DatabaseChanges, substreams::errors::Error> {
-    let mut tables = Tables::new();
-
-    for event in events.items {
-        tables
-            .create_row("my_table", format!("{}-{}", event.tx_hash, event.log_index))
-            .set("tx_hash", &event.tx_hash)
-            .set("amount", &event.amount)
-            .set("timestamp", &event.timestamp);
-    }
-
-    Ok(tables.to_database_changes())
-}
-```
-
-See the [Substreams SQL docs](https://substreams.streamingfast.io/documentation/consume/sql) for the full guide.
+For AI-assisted discovery, install [substreams-search-mcp](https://www.npmjs.com/package/substreams-search-mcp).
 
 ## License
 

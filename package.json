@@ -1,7 +1,7 @@
 {
-  "name": "substreams-sink-sql-js",
+  "name": "create-substreams-sink-sql",
   "version": "1.0.0",
-  "description": "Sink any Substreams db_out module into PostgreSQL — zero custom code needed",
+  "description": "Scaffold a Substreams SQL sink for PostgreSQL — zero custom code needed",
   "keywords": [
     "substreams",
     "blockchain",
@@ -14,7 +14,8 @@
     "indexing",
     "data-pipeline",
     "evm",
-    "solana"
+    "solana",
+    "create"
   ],
   "homepage": "https://github.com/PaulieB14/substreams-sink-sql-js#readme",
   "bugs": {
@@ -26,14 +27,12 @@
   },
   "license": "MIT",
   "author": "PaulieB14",
+  "bin": {
+    "create-substreams-sink-sql": "bin/cli.js"
+  },
   "files": [
-    "substreams.yaml",
-    "schema.sql",
-    "docker-compose.yml",
-    "Makefile",
-    ".env.example",
-    "README.md",
-    "TUTORIAL.md"
+    "bin/",
+    "template/"
   ],
   "engines": {
     "node": ">=18"

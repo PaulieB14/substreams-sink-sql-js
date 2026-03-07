@@ -1,15 +1,5 @@
-# Packed substreams
-*.spkg
-
-# Environment
-.env
-
-# Docker volumes
-postgres_data/
-
 # OS
 .DS_Store
 
-# Node (legacy)
+# Node
 node_modules/
-dist/
