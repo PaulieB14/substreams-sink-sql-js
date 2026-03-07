@@ -1,8 +1,6 @@
 # 🚀 Substreams Made Easy — Complete Beginner's Tutorial
 
-> A step-by-step guide to streaming blockchain data into PostgreSQL using this repo — no Rust required, no complex infrastructure.
->
-> 📖 **Also available as a [Notion page](https://www.notion.so/31c0d39e069981e095b7df4ff7a1e461)** for a more readable experience.
+> A step-by-step guide to streaming blockchain data into PostgreSQL — no Rust required, no complex infrastructure.
 
 ---
 
@@ -26,7 +24,7 @@
 
 ## What Is This Tutorial About?
 
-This guide walks you through **substreams-sink-sql-js** — a ready-to-use template that lets you pull blockchain data from any chain directly into a PostgreSQL database, with zero custom infrastructure needed. No Rust expertise required for basic use. No complex DevOps. Just clone, configure, and stream.
+This guide walks you through **create-substreams-sink-sql** — a scaffolding tool that sets up everything you need to pull blockchain data from any chain directly into a PostgreSQL database. No Rust expertise required for basic use. No complex DevOps. Just scaffold, configure, and stream.
 
 ---
 
@@ -110,23 +108,31 @@ Sign up, create an API key, and keep it ready.
 
 ## ⚡ Quick Start — From Zero to Streaming in 6 Steps
 
-### Step 1 — Clone the Repository
+### Step 1 — Scaffold Your Project
 
 ```bash
-git clone https://github.com/PaulieB14/substreams-sink-sql-js.git
-cd substreams-sink-sql-js
+npm init substreams-sink-sql my-sink
+cd my-sink
+```
+
+Or with npx:
+
+```bash
+npx create-substreams-sink-sql my-sink
+cd my-sink
 ```
 
 What's inside:
 
 ```
-📁 substreams-sink-sql-js/
+📁 my-sink/
 ├── substreams.yaml       ← Main config: which .spkg to use & sink settings
 ├── schema.sql            ← Your database table definitions
 ├── docker-compose.yml    ← Runs Postgres + pgweb locally
 ├── Makefile              ← Shortcut commands (make up, make dev, etc.)
 ├── .env.example          ← Template for your environment variables
-└── README.md
+├── .gitignore
+└── TUTORIAL.md           ← This file
 ```
 
 ### Step 2 — Set Your API Token
@@ -146,7 +152,7 @@ make up
 ```
 
 Spins up:
-- **Postgres 16** on port `5432`
+- **Postgres 16** on port `5433` (mapped to avoid conflicts with local Postgres)
 - **pgweb** browser UI at http://localhost:8081
 
 ### Step 4 — Create the Database Tables
@@ -189,15 +195,15 @@ SELECT * FROM block_meta LIMIT 10;
 
 ```yaml
 package:
-  name: substreams-sink-sql
+  name: substreams_sink_sql
   version: v0.1.0
 
 imports:
-  spkg: https://spkg.io/streamingfast/substreams-eth-block-meta-v0.4.1.spkg
+  spkg: https://spkg.io/streamingfast/substreams-eth-block-meta-v0.4.3.spkg
 
 sink:
   module: db_out
-  type: sf.substreams.sink.subgraph.v1.Service
+  type: sf.substreams.sink.sql.v1.Service
 ```
 
 The `imports.spkg` URL is where you point to your chosen Substreams package.
@@ -450,6 +456,64 @@ See the full guide: [Substreams SQL docs](https://substreams.streamingfast.io/do
 
 ---
 
+## 📊 What to Do After Streaming
+
+Once your data is in PostgreSQL, here's how to put it to work.
+
+### Query Patterns in pgweb
+
+Open http://localhost:8081 and try these queries:
+
+```sql
+-- Most recent blocks
+SELECT * FROM block_meta ORDER BY number DESC LIMIT 20;
+
+-- Count rows to verify streaming progress
+SELECT COUNT(*) FROM block_meta;
+
+-- Time-based queries (if your schema has timestamps)
+SELECT * FROM block_meta
+WHERE timestamp >= NOW() - INTERVAL '1 hour'
+ORDER BY timestamp DESC;
+```
+
+### Connect External Tools
+
+Your Postgres is accessible at `localhost:5433`. Connect any SQL client or BI tool:
+
+| Tool | Connection |
+|------|-----------|
+| **psql** (CLI) | `psql postgresql://dev-node:insecure-change-me-in-prod@localhost:5433/substreams` |
+| **DBeaver / DataGrip** | Host: `localhost`, Port: `5433`, DB: `substreams` |
+| **Metabase / Grafana** | Use the same Postgres DSN as a data source |
+| **Python (pandas)** | `pd.read_sql("SELECT * FROM block_meta", "postgresql://dev-node:insecure-change-me-in-prod@localhost:5433/substreams")` |
+| **Node.js (pg)** | `new Pool({ connectionString: "postgresql://dev-node:insecure-change-me-in-prod@localhost:5433/substreams" })` |
+
+### Export to CSV
+
+```bash
+psql postgresql://dev-node:insecure-change-me-in-prod@localhost:5433/substreams \
+  -c "\COPY block_meta TO 'block_meta.csv' CSV HEADER"
+```
+
+### Go to Production
+
+When you're ready to stream live data continuously:
+
+```bash
+# Switch from dev mode (short range) to production (live streaming)
+make run
+```
+
+The cursor system automatically tracks progress — if the process crashes or restarts, it picks up exactly where it left off.
+
+For production deployments, consider:
+- Using a managed Postgres instance (e.g., Supabase, Neon, RDS)
+- Setting `PG_DSN` to your production database
+- Running `make run` in a process manager (systemd, pm2, Docker)
+
+---
+
 ## 🐛 Troubleshooting Common Issues
 
 ### "Permission denied" on make commands
@@ -495,7 +559,7 @@ make setup   # Recreate with updated schema
 - [ ] Install substreams-sink-sql CLI
 - [ ] Install Docker Desktop
 - [ ] Get API token from [app.pinax.network](https://app.pinax.network)
-- [ ] Clone this repo
+- [ ] Scaffold project: `npm init substreams-sink-sql my-sink`
 - [ ] Copy `.env.example` → `.env` and add token
 - [ ] `make up`
 - [ ] `make setup`
@@ -510,7 +574,8 @@ make setup   # Recreate with updated schema
 
 | Resource | URL |
 |----------|-----|
-| This repo | https://github.com/PaulieB14/substreams-sink-sql-js |
+| NPM package | https://www.npmjs.com/package/create-substreams-sink-sql |
+| GitHub repo | https://github.com/PaulieB14/substreams-sink-sql-js |
 | Browse packages | https://substreams.dev |
 | substreams-search-mcp | https://www.npmjs.com/package/substreams-search-mcp |
 | Get API token | https://app.pinax.network |
@@ -518,4 +583,3 @@ make setup   # Recreate with updated schema
 | Chain endpoints | https://substreams.streamingfast.io/reference-and-specs/chains-and-endpoints |
 | SQL sink docs | https://substreams.streamingfast.io/documentation/consume/sql |
 | StreamingFast GitHub | https://github.com/streamingfast |
-| Notion tutorial | https://www.notion.so/31c0d39e069981e095b7df4ff7a1e461 |
