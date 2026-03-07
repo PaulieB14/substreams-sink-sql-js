@@ -9,6 +9,7 @@ package:
 # Replace with your own .spkg file or URL
 imports:
   spkg: https://spkg.io/streamingfast/substreams-eth-block-meta-v0.4.3.spkg
+  sql: https://github.com/streamingfast/substreams-sink-sql/releases/download/protodefs-v1.0.7/substreams-sink-sql-protodefs-v1.0.7.spkg
 
 modules:
   - name: db_out
