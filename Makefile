@@ -7,8 +7,8 @@ ENDPOINT ?= eth.substreams.pinax.network:443
 START_BLOCK ?= 1000000
 STOP_BLOCK ?= +100
 
-# PostgreSQL connection string
-PG_DSN ?= psql://dev-node:insecure-change-me-in-prod@localhost:5432/substreams?sslmode=disable
+# PostgreSQL connection string (port 5433 to avoid conflict with local Postgres)
+PG_DSN ?= psql://dev-node:insecure-change-me-in-prod@localhost:5433/substreams?sslmode=disable
 
 .DEFAULT_GOAL := help
 
@@ -23,7 +23,7 @@ pack: ## Pack the substreams manifest into an .spkg
 .PHONY: up
 up: ## Start Postgres and pgweb via Docker Compose
 	docker compose up -d
-	@echo "Postgres running on localhost:5432"
+	@echo "Postgres running on localhost:5433"
 	@echo "pgweb UI at http://localhost:8081"
 
 .PHONY: down
