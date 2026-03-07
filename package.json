@@ -1,0 +1,41 @@
+{
+  "name": "substreams-sink-sql-js",
+  "version": "1.0.0",
+  "description": "Sink any Substreams db_out module into PostgreSQL — zero custom code needed",
+  "keywords": [
+    "substreams",
+    "blockchain",
+    "postgresql",
+    "postgres",
+    "sql",
+    "ethereum",
+    "web3",
+    "streamingfast",
+    "indexing",
+    "data-pipeline",
+    "evm",
+    "solana"
+  ],
+  "homepage": "https://github.com/PaulieB14/substreams-sink-sql-js#readme",
+  "bugs": {
+    "url": "https://github.com/PaulieB14/substreams-sink-sql-js/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PaulieB14/substreams-sink-sql-js.git"
+  },
+  "license": "MIT",
+  "author": "PaulieB14",
+  "files": [
+    "substreams.yaml",
+    "schema.sql",
+    "docker-compose.yml",
+    "Makefile",
+    ".env.example",
+    "README.md",
+    "TUTORIAL.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
