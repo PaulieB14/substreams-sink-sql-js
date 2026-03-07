@@ -1,6 +1,6 @@
 {
   "name": "create-substreams-sink-sql",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Scaffold a Substreams SQL sink for PostgreSQL — zero custom code needed",
   "keywords": [
     "substreams",
