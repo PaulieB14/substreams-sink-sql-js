@@ -1,14 +1,12 @@
 specVersion: v0.1.0
 package:
-  name: substreams_sink_sql
+  name: aerodrome_sink_sql
   version: v0.1.0
   url: https://github.com/PaulieB14/substreams-sink-sql-js
-  description: Substreams SQL Sink for PostgreSQL
+  description: Aerodrome Finance SQL Sink for PostgreSQL
 
-# Import your Substreams .spkg that outputs DatabaseChanges
-# Replace with your own .spkg file or URL
 imports:
-  spkg: https://spkg.io/streamingfast/substreams-eth-block-meta-v0.4.3.spkg
+  spkg: ./aerodrome-substreams-fixed.spkg
   sql: https://github.com/streamingfast/substreams-sink-sql/releases/download/protodefs-v1.0.7/substreams-sink-sql-protodefs-v1.0.7.spkg
 
 modules:
@@ -24,4 +22,4 @@ sink:
     postgraphile_frontend:
       enabled: false
 
-network: mainnet
+network: base

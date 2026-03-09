@@ -3,9 +3,9 @@
 # Configure these variables or override via environment / .env file
 # Example: make dev ENDPOINT=eth.substreams.pinax.network:443 START_BLOCK=20000000
 
-ENDPOINT ?= eth.substreams.pinax.network:443
-START_BLOCK ?= 1000000
-STOP_BLOCK ?= +100
+ENDPOINT ?= base.substreams.pinax.network:443
+START_BLOCK ?= 20000000
+STOP_BLOCK ?= +10000
 
 # PostgreSQL connection string (port 5433 to avoid conflict with local Postgres)
 PG_DSN ?= psql://dev-node:insecure-change-me-in-prod@localhost:5433/substreams?sslmode=disable
